@@ -1,0 +1,435 @@
+:root {
+  --color-bg: #1a1a2e;
+  --color-surface: #16213e;
+  --color-border: #0f3460;
+  --color-text: #e4e4e4;
+  --color-text-muted: #9a9a9a;
+  --color-primary: #4fc3f7;
+  --color-success: #66bb6a;
+  --color-warning: #ffa726;
+  --color-danger: #ef5350;
+  --color-neutral: #78909c;
+  --radius: 8px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 13px;
+  min-width: 320px;
+  min-height: 400px;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 12px;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-header h1 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.app-header nav {
+  display: flex;
+  gap: 4px;
+}
+
+.app-header nav button {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  padding: 4px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.app-header nav button.active,
+.app-header nav button:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
+.dashboard {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.total-cost {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+}
+
+.total-cost .label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.total-cost .value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.usage-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.usage-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-header h3 {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.card-cost {
+  margin-bottom: 8px;
+}
+
+.cost-used {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cost-limit {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.progress-bar {
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.card-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  color: var(--color-text-muted);
+}
+
+.loading {
+  text-align: center;
+  padding: 32px;
+  color: var(--color-text-muted);
+}
+
+.settings {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.settings h2 {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.provider-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.provider-header .toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.provider-fields {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.field input {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: var(--color-text);
+  font-size: 12px;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.save-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--color-primary);
+  color: #000;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.save-btn:hover {
+  opacity: 0.9;
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* AI Insights Panel */
+.insights-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.insights-header {
+  margin-bottom: 8px;
+}
+
+.ai-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #7c4dff, #448aff);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.prediction-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: var(--color-bg);
+  border-radius: 6px;
+}
+
+.prediction-item {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.prediction-label {
+  font-size: 9px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.prediction-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insight-card {
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 3px solid var(--color-neutral);
+}
+
+.insight-card.severity-critical {
+  border-left-color: var(--color-danger);
+  background: rgba(239, 83, 80, 0.05);
+}
+
+.insight-card.severity-warning {
+  border-left-color: var(--color-warning);
+  background: rgba(255, 167, 38, 0.05);
+}
+
+.insight-card.severity-info {
+  border-left-color: var(--color-primary);
+  background: rgba(79, 195, 247, 0.05);
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.severity-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-neutral);
+}
+
+.severity-badge.critical {
+  background: var(--color-danger);
+}
+
+.severity-badge.warning {
+  background: var(--color-warning);
+}
+
+.severity-badge.info {
+  background: var(--color-primary);
+}
+
+.insight-title {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.insight-description {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.insight-suggestion {
+  font-size: 11px;
+  color: var(--color-primary);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Prediction Chart */
+.prediction-chart {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.chart-header {
+  margin-bottom: 8px;
+}
+
+.chart-title {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+}
