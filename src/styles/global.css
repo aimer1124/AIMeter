@@ -114,6 +114,13 @@ body {
   padding: 12px;
 }
 
+.card-error {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 4px 0;
+}
+
 .card-header {
   display: flex;
   align-items: center;

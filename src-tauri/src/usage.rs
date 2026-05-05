@@ -1,4 +1,7 @@
 use serde::{Deserialize, Serialize};
+use tauri::AppHandle;
+
+use crate::providers;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProviderUsage {
@@ -9,29 +12,31 @@ pub struct ProviderUsage {
     pub requests_today: u64,
     pub tokens_used: u64,
     pub last_updated: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
 }
 
-pub async fn get_all_usage() -> Result<Vec<ProviderUsage>, Box<dyn std::error::Error>> {
-    // TODO: Implement actual API calls to each provider
-    // For now return placeholder data to demonstrate the UI
-    Ok(vec![
-        ProviderUsage {
-            provider_id: "claude-code".to_string(),
-            provider_name: "Claude Code".to_string(),
-            cost_used: 12.50,
-            cost_limit: Some(100.0),
-            requests_today: 42,
-            tokens_used: 150_000,
-            last_updated: chrono::Utc::now().to_rfc3339(),
-        },
-        ProviderUsage {
-            provider_id: "openai-codex".to_string(),
-            provider_name: "OpenAI Codex".to_string(),
-            cost_used: 8.30,
-            cost_limit: Some(50.0),
-            requests_today: 28,
-            tokens_used: 95_000,
-            last_updated: chrono::Utc::now().to_rfc3339(),
-        },
-    ])
+pub async fn get_all_usage(app: &AppHandle) -> Result<Vec<ProviderUsage>, Box<dyn std::error::Error>> {
+    let configs = providers::load_providers(app).await?;
+    let mut results = Vec::new();
+
+    for config in configs.iter().filter(|c| c.enabled) {
+        match providers::fetch_usage(config).await {
+            Ok(usage) => results.push(usage),
+            Err(e) => {
+                results.push(ProviderUsage {
+                    provider_id: config.id.clone(),
+                    provider_name: config.name.clone(),
+                    cost_used: 0.0,
+                    cost_limit: config.budget_limit,
+                    requests_today: 0,
+                    tokens_used: 0,
+                    last_updated: chrono::Utc::now().to_rfc3339(),
+                    error: Some(e.to_string()),
+                });
+            }
+        }
+    }
+
+    Ok(results)
 }

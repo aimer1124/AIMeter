@@ -9,6 +9,7 @@ export interface ProviderUsage {
   requests_today: number;
   tokens_used: number;
   last_updated: string;
+  error?: string;
 }
 
 export function useUsage(refreshInterval = 60_000) {

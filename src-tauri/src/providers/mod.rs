@@ -1,6 +1,11 @@
+pub mod claude_code;
+pub mod openai;
+
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
+
+use crate::usage::ProviderUsage;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProviderConfig {
@@ -41,6 +46,23 @@ pub async fn save_providers(
     Ok(())
 }
 
+pub async fn fetch_usage(config: &ProviderConfig) -> Result<ProviderUsage, Box<dyn std::error::Error>> {
+    match config.provider_type {
+        ProviderType::ClaudeCode => claude_code::fetch_usage(config).await,
+        ProviderType::OpenaiCodex => openai::fetch_usage(config).await,
+        _ => Ok(ProviderUsage {
+            provider_id: config.id.clone(),
+            provider_name: config.name.clone(),
+            cost_used: 0.0,
+            cost_limit: config.budget_limit,
+            requests_today: 0,
+            tokens_used: 0,
+            last_updated: chrono::Utc::now().to_rfc3339(),
+            error: Some("This provider does not yet support automatic usage tracking.".to_string()),
+        }),
+    }
+}
+
 fn default_providers() -> Vec<ProviderConfig> {
     vec![
         ProviderConfig {
@@ -48,7 +70,7 @@ fn default_providers() -> Vec<ProviderConfig> {
             name: "Claude Code".to_string(),
             provider_type: ProviderType::ClaudeCode,
             api_key: None,
-            enabled: false,
+            enabled: true,
             budget_limit: None,
         },
         ProviderConfig {
