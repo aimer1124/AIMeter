@@ -185,6 +185,28 @@ fn main() {
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .manage(Mutex::new(notifications::NotificationState::new()))
         .setup(|app| {
+            // Initial data fetch + tray title update on startup
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Ok(usages) = usage::get_all_usage(&handle).await {
+                    history::save_snapshot(&usages);
+                    if let Some(tray) = handle.tray_by_id("main") {
+                        let _ = tray.set_title(Some(&format_tray_title(&usages)));
+                    }
+                }
+
+                // Background refresh every 60 seconds
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+                    if let Ok(usages) = usage::get_all_usage(&handle).await {
+                        history::save_snapshot(&usages);
+                        if let Some(tray) = handle.tray_by_id("main") {
+                            let _ = tray.set_title(Some(&format_tray_title(&usages)));
+                        }
+                    }
+                }
+            });
+
             let quit = MenuItem::with_id(app, "quit", "Quit AIMeter", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit])?;
 

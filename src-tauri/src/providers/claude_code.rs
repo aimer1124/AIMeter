@@ -42,10 +42,15 @@ struct DailyModelTokens {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ModelTokenUsage {
+    #[serde(default)]
     input_tokens: u64,
+    #[serde(default)]
     output_tokens: u64,
+    #[serde(default)]
     cache_read_input_tokens: u64,
+    #[serde(default)]
     cache_creation_input_tokens: u64,
+    #[serde(default)]
     #[allow(dead_code)]
     cost_usd: f64,
 }
