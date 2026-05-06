@@ -258,3 +258,70 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running AIMeter");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::providers::AccountType;
+
+    fn make_usage(
+        account_type: AccountType,
+        cost: f64,
+        quota_used: Option<f64>,
+        quota_limit: Option<f64>,
+        error: Option<String>,
+    ) -> usage::ProviderUsage {
+        usage::ProviderUsage {
+            provider_id: "t".to_string(),
+            provider_name: "T".to_string(),
+            account_type,
+            cost_used: cost,
+            cost_limit: None,
+            quota_used,
+            quota_limit,
+            requests_today: 0,
+            tokens_used: 0,
+            last_updated: String::new(),
+            error,
+        }
+    }
+
+    #[test]
+    fn test_tray_title_api_user() {
+        let usages = vec![make_usage(AccountType::Api, 12.50, None, None, None)];
+        assert_eq!(format_tray_title(&usages), "$12.50");
+    }
+
+    #[test]
+    fn test_tray_title_subscription_user() {
+        let usages = vec![make_usage(
+            AccountType::Pro,
+            0.0,
+            Some(29_250_000.0),
+            Some(45_000_000.0),
+            None,
+        )];
+        assert_eq!(format_tray_title(&usages), "65%");
+    }
+
+    #[test]
+    fn test_tray_title_multiple_providers() {
+        let usages = vec![
+            make_usage(AccountType::Api, 12.50, None, None, None),
+            make_usage(
+                AccountType::Pro,
+                0.0,
+                Some(29_250_000.0),
+                Some(45_000_000.0),
+                None,
+            ),
+        ];
+        assert_eq!(format_tray_title(&usages), "$12.50 | 65%");
+    }
+
+    #[test]
+    fn test_tray_title_empty_usages() {
+        let usages: Vec<usage::ProviderUsage> = vec![];
+        assert_eq!(format_tray_title(&usages), "");
+    }
+}

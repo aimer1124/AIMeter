@@ -57,4 +57,33 @@ mod tests {
         let p_long = forecast_usage(&long, None, 14);
         assert!(p_long.confidence > p_short.confidence);
     }
+
+    #[test]
+    fn single_data_point() {
+        let history = make_history(&[10.0]);
+        let prediction = forecast_usage(&history, None, 7);
+        assert_eq!(prediction.daily_forecast.len(), 7);
+        assert!(prediction.daily_forecast[0].predicted_cost >= 0.0);
+    }
+
+    #[test]
+    fn negative_trend_clamped() {
+        // Steep downward trend should not produce negative predictions
+        let mut costs: Vec<f64> = (0..14).map(|i| 100.0 - i as f64 * 10.0).collect();
+        costs.push(0.0);
+        let prediction = forecast_usage(&make_history(&costs), None, 14);
+        for point in &prediction.daily_forecast {
+            assert!(point.predicted_cost >= 0.0);
+            assert!(point.lower_bound >= 0.0);
+        }
+    }
+
+    #[test]
+    fn budget_already_exhausted() {
+        let history = make_history(&[50.0; 5]);
+        let prediction = forecast_usage(&history, Some(100.0), 14);
+        // 250 spent, 100 limit → already exceeded
+        assert!(prediction.days_until_budget_exhausted.is_some());
+        assert_eq!(prediction.days_until_budget_exhausted.unwrap(), 0.0);
+    }
 }

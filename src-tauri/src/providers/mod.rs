@@ -116,3 +116,86 @@ fn default_providers() -> Vec<ProviderConfig> {
         },
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_providers_count() {
+        assert_eq!(default_providers().len(), 4);
+    }
+
+    #[test]
+    fn test_default_providers_claude_enabled() {
+        let providers = default_providers();
+        let claude = providers.iter().find(|p| p.id == "claude-code").unwrap();
+        assert!(claude.enabled);
+    }
+
+    #[test]
+    fn test_default_providers_others_disabled() {
+        let providers = default_providers();
+        for p in providers.iter().filter(|p| p.id != "claude-code") {
+            assert!(!p.enabled, "{} should be disabled by default", p.id);
+        }
+    }
+
+    #[test]
+    fn test_default_account_type_is_api() {
+        for p in default_providers() {
+            assert!(matches!(p.account_type, AccountType::Api));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_unsupported_provider_returns_error() {
+        let config = ProviderConfig {
+            id: "copilot".to_string(),
+            name: "Copilot".to_string(),
+            provider_type: ProviderType::GithubCopilot,
+            account_type: AccountType::Api,
+            api_key: None,
+            enabled: true,
+            budget_limit: None,
+        };
+        let result = fetch_usage(&config).await.unwrap();
+        assert!(result.error.is_some());
+        assert!(result.error.unwrap().contains("not yet support"));
+    }
+
+    #[test]
+    fn test_provider_config_serde_roundtrip() {
+        let config = ProviderConfig {
+            id: "test".to_string(),
+            name: "Test".to_string(),
+            provider_type: ProviderType::ClaudeCode,
+            account_type: AccountType::Max100,
+            api_key: Some("secret".to_string()),
+            enabled: true,
+            budget_limit: Some(99.99),
+        };
+        let json = serde_json::to_string(&config).unwrap();
+        let parsed: ProviderConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.id, "test");
+        assert_eq!(parsed.budget_limit, Some(99.99));
+        assert!(matches!(parsed.account_type, AccountType::Max100));
+    }
+
+    #[test]
+    fn test_account_type_serde_names() {
+        assert_eq!(serde_json::to_string(&AccountType::Api).unwrap(), "\"api\"");
+        assert_eq!(serde_json::to_string(&AccountType::Pro).unwrap(), "\"pro\"");
+        assert_eq!(serde_json::to_string(&AccountType::Max100).unwrap(), "\"max100\"");
+        assert_eq!(serde_json::to_string(&AccountType::Max200).unwrap(), "\"max200\"");
+    }
+
+    #[test]
+    fn test_provider_type_serde_names() {
+        assert_eq!(serde_json::to_string(&ProviderType::ClaudeCode).unwrap(), "\"claude_code\"");
+        assert_eq!(serde_json::to_string(&ProviderType::OpenaiCodex).unwrap(), "\"openai_codex\"");
+        assert_eq!(serde_json::to_string(&ProviderType::GithubCopilot).unwrap(), "\"github_copilot\"");
+        assert_eq!(serde_json::to_string(&ProviderType::Cursor).unwrap(), "\"cursor\"");
+        assert_eq!(serde_json::to_string(&ProviderType::Custom).unwrap(), "\"custom\"");
+    }
+}

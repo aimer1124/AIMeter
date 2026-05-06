@@ -41,8 +41,9 @@ fn empty_usage(config: &ProviderConfig, error: String) -> ProviderUsage {
     }
 }
 
-pub async fn fetch_usage(
+async fn fetch_usage_with_base_url(
     config: &ProviderConfig,
+    base_url: &str,
 ) -> Result<ProviderUsage, Box<dyn std::error::Error>> {
     let api_key = match &config.api_key {
         Some(key) if !key.is_empty() => key,
@@ -64,7 +65,10 @@ pub async fn fetch_usage(
         .timestamp();
 
     let response = client
-        .get("https://api.openai.com/v1/organization/usage/completions")
+        .get(format!(
+            "{}/v1/organization/usage/completions",
+            base_url
+        ))
         .header("Authorization", format!("Bearer {}", api_key))
         .query(&[
             ("start_time", start_of_day.to_string()),
@@ -109,4 +113,146 @@ pub async fn fetch_usage(
         last_updated: chrono::Utc::now().to_rfc3339(),
         error: None,
     })
+}
+
+pub async fn fetch_usage(
+    config: &ProviderConfig,
+) -> Result<ProviderUsage, Box<dyn std::error::Error>> {
+    fetch_usage_with_base_url(config, "https://api.openai.com").await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::providers::{AccountType, ProviderType};
+
+    fn make_config(api_key: Option<&str>) -> ProviderConfig {
+        ProviderConfig {
+            id: "openai".to_string(),
+            name: "OpenAI".to_string(),
+            provider_type: ProviderType::OpenaiCodex,
+            account_type: AccountType::Api,
+            api_key: api_key.map(|s| s.to_string()),
+            enabled: true,
+            budget_limit: Some(50.0),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_missing_api_key() {
+        let config = make_config(None);
+        let result = fetch_usage_with_base_url(&config, "http://unused").await.unwrap();
+        assert!(result.error.is_some());
+        assert!(result.error.unwrap().contains("API key required"));
+    }
+
+    #[tokio::test]
+    async fn test_empty_api_key() {
+        let config = make_config(Some(""));
+        let result = fetch_usage_with_base_url(&config, "http://unused").await.unwrap();
+        assert!(result.error.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_success_response() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", mockito::Matcher::Regex(r"^/v1/organization/usage/completions.*$".to_string()))
+            .match_header("Authorization", "Bearer test-key")
+            .with_status(200)
+            .with_body(r#"{"data":[{"results":[{"input_tokens":1000,"output_tokens":500,"num_model_requests":5,"cost_in_major":0.05}]}]}"#)
+            .create_async()
+            .await;
+
+        let config = make_config(Some("test-key"));
+        let result = fetch_usage_with_base_url(&config, &server.url()).await.unwrap();
+        mock.assert_async().await;
+        assert!(result.error.is_none());
+        assert_eq!(result.cost_used, 0.05);
+        assert_eq!(result.tokens_used, 1500);
+        assert_eq!(result.requests_today, 5);
+    }
+
+    #[tokio::test]
+    async fn test_success_multiple_buckets() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", mockito::Matcher::Regex(r"^/v1/organization/usage/completions.*$".to_string()))
+            .with_status(200)
+            .with_body(r#"{"data":[{"results":[{"cost_in_major":0.10,"input_tokens":100,"output_tokens":50,"num_model_requests":2}]},{"results":[{"cost_in_major":0.20,"input_tokens":200,"output_tokens":100,"num_model_requests":3}]}]}"#)
+            .create_async()
+            .await;
+
+        let config = make_config(Some("key"));
+        let result = fetch_usage_with_base_url(&config, &server.url()).await.unwrap();
+        mock.assert_async().await;
+        assert_eq!(result.cost_used, 0.30);
+        assert_eq!(result.tokens_used, 450);
+        assert_eq!(result.requests_today, 5);
+    }
+
+    #[tokio::test]
+    async fn test_empty_data_response() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", mockito::Matcher::Regex(r"^/v1/organization/usage/completions.*$".to_string()))
+            .with_status(200)
+            .with_body(r#"{"data":[]}"#)
+            .create_async()
+            .await;
+
+        let config = make_config(Some("key"));
+        let result = fetch_usage_with_base_url(&config, &server.url()).await.unwrap();
+        mock.assert_async().await;
+        assert_eq!(result.cost_used, 0.0);
+        assert_eq!(result.tokens_used, 0);
+    }
+
+    #[tokio::test]
+    async fn test_api_error_401() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", mockito::Matcher::Regex(r"^/v1/organization/usage/completions.*$".to_string()))
+            .with_status(401)
+            .with_body("Unauthorized")
+            .create_async()
+            .await;
+
+        let config = make_config(Some("bad-key"));
+        let result = fetch_usage_with_base_url(&config, &server.url()).await.unwrap();
+        mock.assert_async().await;
+        assert!(result.error.unwrap().contains("401"));
+    }
+
+    #[tokio::test]
+    async fn test_api_error_500() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", mockito::Matcher::Regex(r"^/v1/organization/usage/completions.*$".to_string()))
+            .with_status(500)
+            .with_body("Internal Server Error")
+            .create_async()
+            .await;
+
+        let config = make_config(Some("key"));
+        let result = fetch_usage_with_base_url(&config, &server.url()).await.unwrap();
+        mock.assert_async().await;
+        assert!(result.error.unwrap().contains("500"));
+    }
+
+    #[tokio::test]
+    async fn test_cost_rounding() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", mockito::Matcher::Regex(r"^/v1/organization/usage/completions.*$".to_string()))
+            .with_status(200)
+            .with_body(r#"{"data":[{"results":[{"cost_in_major":0.1249999,"input_tokens":0,"output_tokens":0,"num_model_requests":0}]}]}"#)
+            .create_async()
+            .await;
+
+        let config = make_config(Some("key"));
+        let result = fetch_usage_with_base_url(&config, &server.url()).await.unwrap();
+        mock.assert_async().await;
+        assert_eq!(result.cost_used, 0.12);
+    }
 }

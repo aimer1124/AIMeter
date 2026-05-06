@@ -79,4 +79,34 @@ mod tests {
         let insights = compare_providers(&[provider_a, provider_b]);
         assert!(insights.iter().any(|i| i.id == "provider_efficiency"));
     }
+
+    #[test]
+    fn test_single_data_point() {
+        let insights = analyze_spending_patterns(&make_history(&[5.0]), None);
+        assert!(insights.is_empty());
+    }
+
+    #[test]
+    fn test_zero_older_avg() {
+        let mut costs = vec![0.0; 10];
+        costs.extend(vec![5.0; 7]);
+        let insights = analyze_spending_patterns(&make_history(&costs), None);
+        // Should not panic from division by zero
+        assert!(!insights.iter().any(|i| i.title.contains("NaN")));
+    }
+
+    #[test]
+    fn test_all_zero_costs() {
+        let costs = vec![0.0; 20];
+        let insights = analyze_spending_patterns(&make_history(&costs), None);
+        assert!(!insights.iter().any(|i| i.id == "anomaly_detected"));
+    }
+
+    #[test]
+    fn test_exactly_at_boundary() {
+        // std_dev = 0 when all costs are equal → no anomaly
+        let costs = vec![5.0; 20];
+        let insights = analyze_spending_patterns(&make_history(&costs), None);
+        assert!(!insights.iter().any(|i| i.id == "anomaly_detected"));
+    }
 }

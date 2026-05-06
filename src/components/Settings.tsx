@@ -25,7 +25,7 @@ function Settings() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    invoke<ProviderConfig[]>("get_providers").then(setProviders);
+    invoke<ProviderConfig[]>("get_providers").then(setProviders).catch(() => {});
     invoke<boolean>("get_autostart_enabled").then(setAutostart).catch(() => {});
   }, []);
 
