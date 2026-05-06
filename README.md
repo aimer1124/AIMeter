@@ -2,6 +2,8 @@
 
 > **100% AI-built** — This project is entirely designed, coded, and maintained by AI.
 
+> **Status: On Hold** — Currently evaluating [CodexBar](https://github.com/steipete/CodexBar) as an alternative. If it doesn't fully meet our needs, development will resume here.
+
 A cross-platform menu bar tool for developers to monitor AI coding tool usage and costs in one place.
 
 ## Why AIMeter?
