@@ -1,73 +1,73 @@
 # AIMeter Roadmap
 
-> 策略：先把 Claude Code 单平台做深做透，再横向扩展其他 AI 工具。
+> Strategy: Make Claude Code monitoring deep and complete before expanding to other AI tools.
 
-## MVP 1: Claude Code 完整体验
+## MVP 1: Claude Code Complete Experience ✅
 
-> 目标：日常可用，装上就不想卸载
+> Goal: Daily-drivable — install it and never want to uninstall
 
-| Issue | 功能 | 说明 |
-|-------|------|------|
-| [#1](../../issues/1) | 账户类型选择 | 区分 API / Pro / Max，影响展示和告警逻辑 |
-| [#2](../../issues/2) | 历史数据存储 | 每日快照，90 天数据保留 |
-| [#3](../../issues/3) | 时间维度切换 | 今日 / 本周 / 本月 / 全部 |
-| [#4](../../issues/4) | 菜单栏显示金额 | API 用户显示 `$12.50`，订阅用户显示 `65%` |
-| [#5](../../issues/5) | 开机自启动 | macOS LaunchAgent |
-| [#6](../../issues/6) | UI 适配账户类型 | 美元 vs 配额百分比自适应展示 |
+| Issue | Feature | Description |
+|-------|---------|-------------|
+| [#1](../../issues/1) | Account type selection | API / Pro / Max with adaptive display and alerts |
+| [#2](../../issues/2) | Historical data storage | Daily snapshots, 90-day retention |
+| [#3](../../issues/3) | Time period switching | Today / This Week / This Month / All Time |
+| [#4](../../issues/4) | Menu bar cost display | API: `$12.50`, Subscription: `65%` |
+| [#5](../../issues/5) | Launch at login | macOS LaunchAgent |
+| [#6](../../issues/6) | UI account type adaptation | Dollar costs vs quota percentage |
 
-**交付标准**：看一眼菜单栏就知道今天花了多少。
-
----
-
-## MVP 2: AI 智能分析
-
-> 目标：从"展示数据"进化为"主动提醒"
-
-| Issue | 功能 | 说明 |
-|-------|------|------|
-| [#7](../../issues/7) | 历史趋势图表 | 每日花费折线图 |
-| [#8](../../issues/8) | AI 异常检测 | 基于历史数据识别花费突增 |
-| [#9](../../issues/9) | 预算/配额预测 | 预测耗尽日期 |
-| [#10](../../issues/10) | 智能通知 | 趋势预警，不只是阈值触发 |
-
-**交付标准**：用了一周后，app 能主动告诉你"今天花费异常偏高"。
+**Delivery criteria**: Glance at the menu bar and know today's spend.
 
 ---
 
-## MVP 3: 多平台扩展
+## MVP 2: AI-Powered Analytics
 
-> 目标：兑现"统一监控"核心承诺
+> Goal: Evolve from "showing data" to "proactive alerts"
 
-| Issue | 功能 | 说明 |
-|-------|------|------|
-| [#11](../../issues/11) | OpenAI / Codex 完善 | Usage API 集成 + 按模型细分 |
-| [#12](../../issues/12) | Cursor 支持 | 本地数据读取 |
-| [#13](../../issues/13) | GitHub Copilot 支持 | 组织 API 或手动录入 |
-| [#14](../../issues/14) | 跨平台对比面板 | 多工具花费对比 + 性价比分析 |
+| Issue | Feature | Description |
+|-------|---------|-------------|
+| [#7](../../issues/7) | Historical trend charts | Daily spend/usage line chart |
+| [#8](../../issues/8) | AI anomaly detection | Identify spending spikes from real data |
+| [#9](../../issues/9) | Budget/quota prediction | Forecast exhaustion date |
+| [#10](../../issues/10) | Smart notifications | Trend-based alerts, not just thresholds |
 
-**交付标准**：一个面板看到 Claude + OpenAI 的花费对比。
-
----
-
-## MVP 4: 发布就绪
-
-> 目标：开箱即用，可公开推广
-
-| Issue | 功能 | 说明 |
-|-------|------|------|
-| [#15](../../issues/15) | UI 打磨 | 原生感、动画、light/dark 主题 |
-| [#16](../../issues/16) | 正式图标 | App icon + tray icon 设计 |
-| [#17](../../issues/17) | Homebrew / dmg 分发 | `brew install --cask aimeter` |
-| [#18](../../issues/18) | 自动更新 | tauri-plugin-updater |
-| [#19](../../issues/19) | 首次运行引导 | 新用户设置向导 |
-
-**交付标准**：别人第一次安装就能顺利使用。
+**Delivery criteria**: After a week of use, the app proactively tells you "today's spending is unusually high."
 
 ---
 
-## 项目管理
+## MVP 3: Multi-Provider Expansion
 
-- **Milestones**: 每个 MVP 对应一个 [GitHub Milestone](../../milestones)
-- **Issues**: 每个功能点对应一个 Issue，在对应 Milestone 下跟踪
-- **PR 工作流**: 每个 Issue 一个分支 → PR → AI 自动 Review → 合并
-- **进度查看**: [GitHub Milestones 页面](../../milestones)
+> Goal: Deliver on the "unified monitoring" promise
+
+| Issue | Feature | Description |
+|-------|---------|-------------|
+| [#11](../../issues/11) | OpenAI / Codex polish | Usage API integration + per-model breakdown |
+| [#12](../../issues/12) | Cursor support | Local data reading |
+| [#13](../../issues/13) | GitHub Copilot support | Org API or manual entry |
+| [#14](../../issues/14) | Cross-provider comparison | Multi-tool cost comparison + efficiency analysis |
+
+**Delivery criteria**: See Claude + OpenAI costs side-by-side in one panel.
+
+---
+
+## MVP 4: Release Ready
+
+> Goal: Out-of-box experience, ready for public distribution
+
+| Issue | Feature | Description |
+|-------|---------|-------------|
+| [#15](../../issues/15) | UI polish | Native feel, animations, light/dark theme |
+| [#16](../../issues/16) | Official icons | App icon + tray icon design |
+| [#17](../../issues/17) | Homebrew / dmg distribution | `brew install --cask aimeter` |
+| [#18](../../issues/18) | Auto-update | tauri-plugin-updater |
+| [#19](../../issues/19) | Onboarding wizard | First-run setup guide |
+
+**Delivery criteria**: A first-time user can install and start using it without reading docs.
+
+---
+
+## Project Management
+
+- **Milestones**: Each MVP maps to a [GitHub Milestone](../../milestones)
+- **Issues**: Each feature is tracked as an Issue under its Milestone
+- **PR workflow**: Branch per Issue → PR → AI auto-review → Merge
+- **Progress**: [GitHub Milestones page](../../milestones)
