@@ -5,6 +5,7 @@
   "permissions": [
     "core:default",
     "store:default",
-    "notification:default"
+    "notification:default",
+    "autostart:default"
   ]
 }

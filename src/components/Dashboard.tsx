@@ -1,13 +1,23 @@
+import { useState } from "react";
 import { useUsage } from "../hooks/useUsage";
 import { useInsights } from "../hooks/useInsights";
 import UsageCard from "./UsageCard";
 import InsightsPanel from "./ai/InsightsPanel";
 import PredictionChart from "./ai/PredictionChart";
 
+type Period = "today" | "week" | "month" | "all";
+
+const PERIOD_LABELS: Record<Period, string> = {
+  today: "Today",
+  week: "This Week",
+  month: "This Month",
+  all: "All Time",
+};
+
 function Dashboard() {
+  const [period, setPeriod] = useState<Period>("today");
   const { usages, loading } = useUsage();
 
-  // Build mock history from current data for AI analysis demo
   const history = usages.map((u) => ({
     timestamp: u.last_updated,
     cost: u.cost_used,
@@ -15,27 +25,49 @@ function Dashboard() {
     requests: u.requests_today,
   }));
 
-  const totalBudget = usages.reduce(
-    (sum, u) => sum + (u.cost_limit ?? 0),
-    0
-  ) || null;
+  const totalBudget =
+    usages.reduce((sum, u) => sum + (u.cost_limit ?? 0), 0) || null;
 
-  const { insights, prediction, loading: aiLoading } = useInsights(history, totalBudget);
+  const { insights, prediction, loading: aiLoading } = useInsights(
+    history,
+    totalBudget
+  );
 
   if (loading) {
-    return <div className="loading">Loading usage data...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   const totalCost = usages.reduce((sum, u) => sum + u.cost_used, 0);
+  const hasSubscription = usages.some((u) => u.account_type !== "api");
 
   return (
     <div className="dashboard">
-      <div className="total-cost">
-        <span className="label">Total Spend</span>
-        <span className="value">${totalCost.toFixed(2)}</span>
+      <div className="period-tabs">
+        {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
+          <button
+            key={p}
+            className={period === p ? "active" : ""}
+            onClick={() => setPeriod(p)}
+          >
+            {PERIOD_LABELS[p]}
+          </button>
+        ))}
       </div>
 
-      <InsightsPanel insights={insights} prediction={prediction} loading={aiLoading} />
+      <div className="total-cost">
+        <span className="label">
+          {hasSubscription ? "Usage" : "Spend"} — {PERIOD_LABELS[period]}
+        </span>
+        <span className="value">
+          {hasSubscription ? `${totalCost.toFixed(2)}` : `$${totalCost.toFixed(2)}`}
+        </span>
+      </div>
+
+      <InsightsPanel
+        insights={insights}
+        prediction={prediction}
+        loading={aiLoading}
+      />
 
       {prediction && prediction.daily_forecast.length > 0 && (
         <PredictionChart prediction={prediction} />

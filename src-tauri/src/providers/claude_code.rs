@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
-use super::ProviderConfig;
+use super::{AccountType, ProviderConfig};
 use crate::usage::ProviderUsage;
 
 #[derive(Deserialize)]
@@ -107,8 +107,11 @@ pub async fn fetch_usage(
         return Ok(ProviderUsage {
             provider_id: config.id.clone(),
             provider_name: config.name.clone(),
+            account_type: config.account_type.clone(),
             cost_used: 0.0,
             cost_limit: config.budget_limit,
+            quota_used: None,
+            quota_limit: None,
             requests_today: 0,
             tokens_used: 0,
             last_updated: chrono::Utc::now().to_rfc3339(),
@@ -139,11 +142,29 @@ pub async fn fetch_usage(
         .map(|d| d.message_count)
         .unwrap_or(0);
 
+    let (quota_used, quota_limit) = match config.account_type {
+        AccountType::Pro => {
+            // Pro: approximate monthly token quota
+            Some((total_tokens as f64, 45_000_000.0))
+        }
+        AccountType::Max100 => {
+            Some((total_tokens as f64, 225_000_000.0))
+        }
+        AccountType::Max200 => {
+            Some((total_tokens as f64, 450_000_000.0))
+        }
+        AccountType::Api => None,
+    }
+    .map_or((None, None), |(u, l)| (Some(u), Some(l)));
+
     Ok(ProviderUsage {
         provider_id: config.id.clone(),
         provider_name: config.name.clone(),
+        account_type: config.account_type.clone(),
         cost_used: (total_cost * 100.0).round() / 100.0,
         cost_limit: config.budget_limit,
+        quota_used,
+        quota_limit,
         requests_today,
         tokens_used: total_tokens,
         last_updated: chrono::Utc::now().to_rfc3339(),

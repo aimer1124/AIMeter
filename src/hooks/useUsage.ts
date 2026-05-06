@@ -4,8 +4,11 @@ import { invoke } from "@tauri-apps/api/core";
 export interface ProviderUsage {
   provider_id: string;
   provider_name: string;
+  account_type: string;
   cost_used: number;
   cost_limit: number | null;
+  quota_used: number | null;
+  quota_limit: number | null;
   requests_today: number;
   tokens_used: number;
   last_updated: string;

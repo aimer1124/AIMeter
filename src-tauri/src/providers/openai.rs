@@ -25,22 +25,32 @@ struct UsageResult {
     cost_in_major: f64,
 }
 
+fn empty_usage(config: &ProviderConfig, error: String) -> ProviderUsage {
+    ProviderUsage {
+        provider_id: config.id.clone(),
+        provider_name: config.name.clone(),
+        account_type: config.account_type.clone(),
+        cost_used: 0.0,
+        cost_limit: config.budget_limit,
+        quota_used: None,
+        quota_limit: None,
+        requests_today: 0,
+        tokens_used: 0,
+        last_updated: chrono::Utc::now().to_rfc3339(),
+        error: Some(error),
+    }
+}
+
 pub async fn fetch_usage(
     config: &ProviderConfig,
 ) -> Result<ProviderUsage, Box<dyn std::error::Error>> {
     let api_key = match &config.api_key {
         Some(key) if !key.is_empty() => key,
         _ => {
-            return Ok(ProviderUsage {
-                provider_id: config.id.clone(),
-                provider_name: config.name.clone(),
-                cost_used: 0.0,
-                cost_limit: config.budget_limit,
-                requests_today: 0,
-                tokens_used: 0,
-                last_updated: chrono::Utc::now().to_rfc3339(),
-                error: Some("API key required. Use an Admin API key with usage.read scope.".to_string()),
-            });
+            return Ok(empty_usage(
+                config,
+                "API key required. Use an Admin API key with usage.read scope.".to_string(),
+            ));
         }
     };
 
@@ -66,16 +76,10 @@ pub async fn fetch_usage(
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        return Ok(ProviderUsage {
-            provider_id: config.id.clone(),
-            provider_name: config.name.clone(),
-            cost_used: 0.0,
-            cost_limit: config.budget_limit,
-            requests_today: 0,
-            tokens_used: 0,
-            last_updated: chrono::Utc::now().to_rfc3339(),
-            error: Some(format!("OpenAI API error ({}): {}", status, body)),
-        });
+        return Ok(empty_usage(
+            config,
+            format!("OpenAI API error ({}): {}", status, body),
+        ));
     }
 
     let data: UsageResponse = response.json().await?;
@@ -95,8 +99,11 @@ pub async fn fetch_usage(
     Ok(ProviderUsage {
         provider_id: config.id.clone(),
         provider_name: config.name.clone(),
+        account_type: config.account_type.clone(),
         cost_used: (total_cost * 100.0).round() / 100.0,
         cost_limit: config.budget_limit,
+        quota_used: None,
+        quota_limit: None,
         requests_today: total_requests,
         tokens_used: total_tokens,
         last_updated: chrono::Utc::now().to_rfc3339(),

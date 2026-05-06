@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod ai;
+mod history;
 mod notifications;
 mod providers;
 mod usage;
@@ -11,6 +12,7 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, WebviewUrl,
 };
+use tauri_plugin_autostart::MacosLauncher;
 
 const PANEL_WIDTH: f64 = 360.0;
 const PANEL_HEIGHT: f64 = 520.0;
@@ -63,16 +65,53 @@ fn toggle_panel(app: &tauri::AppHandle, position: Option<tauri::PhysicalPosition
     }
 }
 
+fn format_tray_title(usages: &[usage::ProviderUsage]) -> String {
+    if usages.is_empty() {
+        return String::new();
+    }
+    let mut parts = Vec::new();
+    for u in usages {
+        if u.error.is_some() {
+            continue;
+        }
+        match u.account_type {
+            providers::AccountType::Api => {
+                parts.push(format!("${:.2}", u.cost_used));
+            }
+            _ => {
+                if let (Some(used), Some(limit)) = (u.quota_used, u.quota_limit) {
+                    if limit > 0.0 {
+                        parts.push(format!("{:.0}%", (used / limit) * 100.0));
+                    }
+                }
+            }
+        }
+    }
+    if parts.is_empty() {
+        return String::new();
+    }
+    parts.join(" | ")
+}
+
 #[tauri::command]
 async fn get_usage_summary(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<notifications::NotificationState>>,
 ) -> Result<Vec<usage::ProviderUsage>, String> {
     let usages = usage::get_all_usage(&app).await.map_err(|e| e.to_string())?;
+    history::save_snapshot(&usages);
     if let Ok(mut notif_state) = state.lock() {
         notif_state.check_and_notify(&app, &usages);
     }
+    if let Some(tray) = app.tray_by_id("main") {
+        let _ = tray.set_title(Some(&format_tray_title(&usages)));
+    }
     Ok(usages)
+}
+
+#[tauri::command]
+async fn get_history(days: Option<usize>) -> Result<Vec<history::DailySnapshot>, String> {
+    Ok(history::load_history(days.unwrap_or(90)))
 }
 
 #[tauri::command]
@@ -114,6 +153,25 @@ async fn get_predictions(
 }
 
 #[tauri::command]
+async fn get_autostart_enabled(app: tauri::AppHandle) -> Result<bool, String> {
+    use tauri_plugin_autostart::ManagerExt;
+    app.autolaunch()
+        .is_enabled()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn set_autostart_enabled(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri_plugin_autostart::ManagerExt;
+    let autostart = app.autolaunch();
+    if enabled {
+        autostart.enable().map_err(|e| e.to_string())
+    } else {
+        autostart.disable().map_err(|e| e.to_string())
+    }
+}
+
+#[tauri::command]
 async fn compare_providers(
     provider_data: Vec<(String, Vec<ai::insights::UsageDataPoint>)>,
 ) -> Result<Vec<ai::insights::Insight>, String> {
@@ -124,12 +182,13 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .manage(Mutex::new(notifications::NotificationState::new()))
         .setup(|app| {
             let quit = MenuItem::with_id(app, "quit", "Quit AIMeter", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&quit])?;
 
-            TrayIconBuilder::new()
+            TrayIconBuilder::with_id("main")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
@@ -165,11 +224,14 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             get_usage_summary,
+            get_history,
             get_providers,
             save_providers,
             get_insights,
             get_predictions,
             compare_providers,
+            get_autostart_enabled,
+            set_autostart_enabled,
         ])
         .run(tauri::generate_context!())
         .expect("error while running AIMeter");

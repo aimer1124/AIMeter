@@ -77,6 +77,38 @@ body {
   overflow-y: auto;
 }
 
+.period-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 3px;
+  border: 1px solid var(--color-border);
+}
+
+.period-tabs button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  padding: 5px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+
+.period-tabs button.active {
+  background: var(--color-primary);
+  color: #000;
+  font-weight: 600;
+}
+
+.period-tabs button:hover:not(.active) {
+  color: var(--color-text);
+}
+
 .total-cost {
   display: flex;
   flex-direction: column;
@@ -131,6 +163,22 @@ body {
 .card-header h3 {
   font-size: 13px;
   font-weight: 500;
+}
+
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plan-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .status-dot {
@@ -210,6 +258,12 @@ body {
   margin-bottom: 12px;
 }
 
+.settings-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
 .provider-list {
   display: flex;
   flex-direction: column;
@@ -260,9 +314,27 @@ body {
   font-size: 12px;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: none;
   border-color: var(--color-primary);
+}
+
+.field select {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  color: var(--color-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 2px 0;
 }
 
 .save-btn {
